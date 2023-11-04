@@ -1,62 +1,67 @@
 module Main exposing (..)
 
-
-import Browser exposing (..)
-import Html exposing (Html, button, div, text)
+import Browser
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-
-
-
--- MAIN
+import Html.Events exposing (onInput)
+import Debug exposing (todo)
 
 
 main = 
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.sandbox { init = init, update = update, view = view}
 
 
 
 -- MODEL
-
-
-type alias Model = Int
-
 init : Model
-init = 
-    0
+init =
+    { todoList = []
+    , newTodo = "" 
+    }
+
+type alias Model =
+    { todoList : List String
+    , newTodo : String
+    }
+
 
 
 -- UPDATE
-type Msg = 
-      Increment 
-    | Decrement
-    | Reset 
-    | IncrementByTen
+
+type Msg 
+    = AddNewTodo
+    | UpdateNewTodo String
+    | DeleteTodo Int
 
 update : Msg -> Model -> Model
-update msg model = 
-    case msg of 
-        Increment ->
-            model + 1
-        
-        Decrement ->
-            model - 1
+update msg model =
+    case msg of
+        AddNewTodo ->
+            { model | todoList = model.todoList ++ [model.newTodo], newTodo = ""}
 
-        Reset ->
-            0
-        
-        IncrementByTen ->
-            model + 10
+        UpdateNewTodo newText ->
+            { model | newTodo = newText }
+
+        DeleteTodo index ->
+            { model | todoList = List.take index model.todoList ++ List.drop (index + 1) model.todoList }
 
 
 -- VIEW
+todoToLi : Int -> String -> Html Msg
+todoToLi index todo =
+    li [] [ text todo, button [ onClick (DeleteTodo index)] [ text "Delete"]]
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Decrement] [text "Decrement"]
-        , div [] [ text (String.fromInt model) ]
-        , button [ onClick Increment ] [ text "Increment"]
-        , button [ onClick Reset ] [ text "Reset"]
-        , button [ onClick IncrementByTen ] [ text "+10"]
+        [ input
+            [ type_ "text" 
+            , value model.newTodo
+            , onInput (\newText -> UpdateNewTodo newText)
+            ]
+            []
+        , button [ onClick AddNewTodo, class "button"] [ text "Add Todo" ]
+        , ul [] (List.indexedMap (\index todo -> todoToLi index todo) model.todoList)
         ]
